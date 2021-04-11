@@ -138,9 +138,8 @@ clustermq_class <- R6::R6Class(
       target_sync_file_meta(target, self$meta)
     },
     shut_down_worker = function() {
-      if (self$workers > 0L) {
+      if (self$crew$workers > 0L) {
         self$crew$send_shutdown_worker()
-        self$workers <- self$workers - 1L
       }
     },
     # Requires a long-running pipeline to guarantee test coverage,
@@ -184,10 +183,10 @@ clustermq_class <- R6::R6Class(
       )
     },
     iterate = function() {
-      message <- if_any(self$workers > 0L, self$crew$receive_data(), list())
+      message <- if_any(self$crew$workers > 0L, self$crew$receive_data(), list())
       self$conclude_worker_target(message$result)
       token <- message$token
-      if (self$workers > 0L && !identical(token, "set_common_data_token")) {
+      if (self$crew$workers > 0L && !identical(token, "set_common_data_token")) {
         self$crew$send_common_data()
       } else if (self$scheduler$queue$is_nonempty()) {
         self$next_target()
